@@ -114,7 +114,7 @@ class RockPaperScissorsCheatingProcessTest {
 		assertEquals(1, printed.size());
 		assertEquals("true false", printed.get(0));
 	}
-
+	
 	/**
 	 * receiveTest5:
 	 * Similar to receiveTest4 but when q plays PAPER,
@@ -133,6 +133,7 @@ class RockPaperScissorsCheatingProcessTest {
 		assertEquals(Item.SCISSORS, ((RockPaperScissorsMessage) content.iterator().next()).getItem());
 
 		List<String> printed = getPrinted(p);
+		
 		assertEquals(1, printed.size());
 		assertEquals("true false", printed.get(0));
 	}

@@ -34,7 +34,7 @@ class RockPaperScissorsProcessTest {
 		Network n = Network.parse(false, "p,q,r:week1.RockPaperScissorsProcess").makeComplete();
 
 		Process p = n.getProcess("p");
-		p.init();
+		p.init();	
 
 		assertEquals(1, n.getChannel("p", "q").getContent().size());
 		assertEquals(1, n.getChannel("p", "r").getContent().size());
@@ -88,6 +88,7 @@ class RockPaperScissorsProcessTest {
 		// p receives from s: should print "true true" (received three different items)
 		receiveOrCatch(p, new RockPaperScissorsMessage(Item.SCISSORS), n.getChannel("s", "p"));
 		List<String> printed = getPrinted(p);
+		
 		assertEquals(1, printed.size());
 		assertEquals("true true", printed.get(0));
 	}
@@ -151,6 +152,7 @@ class RockPaperScissorsProcessTest {
 	 * Expects the overall simulation to terminate successfully and each process to output exactly one decision.
 	 * Verifies that each printed result is one of the four possible outcomes: true/false combinations.
 	 */
+
 	@Test
 	void simulationTest1() {
 		Network n = new Network(false);

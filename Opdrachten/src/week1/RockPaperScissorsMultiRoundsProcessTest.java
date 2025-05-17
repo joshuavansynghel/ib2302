@@ -74,8 +74,8 @@ class RockPaperScissorsMultiRoundsProcessTest {
 		assertEquals(1, n.getChannel("p", "q").getContent().size());
 
 		receiveOrCatch(p, new RockPaperScissorsMessage(Item.PAPER), n.getChannel("r", "p"));
-		assertEquals(1, n.getChannel("p", "q").getContent().size());
-
+		assertEquals(1, n.getChannel("p", "q").getContent().size());		
+		
 		receiveOrCatch(p, new RockPaperScissorsMessage(Item.SCISSORS), n.getChannel("s", "p"));
 		assertEquals(2, n.getChannel("p", "q").getContent().size());
 	}
@@ -133,7 +133,7 @@ class RockPaperScissorsMultiRoundsProcessTest {
 		receiveOrCatch(p, new RockPaperScissorsMessage(item), n.getChannel("q", "p"));
 		assertEquals(4, pq.getContent().size());
 	}
-
+    
 	/**
 	 * receiveTest5:
 	 * Checks that messages from two full rounds ahead are considered invalid.
