@@ -19,9 +19,11 @@ public class Configuration {
 		
 		String[] tokens = s.split(" ");
 		for (String token : tokens) {
+			//System.out.println("Token: " + token);
 			list.add(parse(token, configurations));
+			//System.out.println("New list: " + list);
 		}
-		
+		//System.out.println("Final list" + list);
 		return list;
 	}
 }

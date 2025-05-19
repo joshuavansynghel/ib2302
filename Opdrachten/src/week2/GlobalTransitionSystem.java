@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
@@ -21,9 +22,41 @@ public class GlobalTransitionSystem {
 	private Map<Configuration, Map<Event, Configuration>> transitions = new LinkedHashMap<>();
 	private Configuration initial;
 	
+	
 	public boolean hasExecution(List<Configuration> sequence) {
-		// TODO
-		return false;
+		// return false if no configurations in list
+		if (sequence.size() == 0) {
+			return false;
+		}
+		// return false if first config in sequence is not initial config
+		if (sequence.get(0) != initial) {
+			return false;
+		}
+		
+		// get first config in sequence
+		Configuration cStart = sequence.get(0);
+
+		// loop over all config in sequence starting from second element
+		for (int i = 1; i < sequence.size(); i++) {
+			// if there exists a transition from cStart to next element in sequence
+			// go to next element in sequence
+			if (transitions.get(cStart).values().contains(sequence.get(i))) {
+				cStart = sequence.get(i);
+			}
+			// otherwise sequence is not valid transition
+			else {
+				return false;
+			}
+		}
+		// the last element can't exist as a starting configuration
+		if (transitions.keySet().contains(cStart) ) {
+			return false;
+		}
+		// otherwise the last element is indeed a final state 
+		else {
+			return true;
+		}
+		
 	}
 	
 	/*

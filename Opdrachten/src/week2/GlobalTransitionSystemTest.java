@@ -45,7 +45,11 @@ class GlobalTransitionSystemTest {
 		s += "g1--c@q->g6 g2--c@q->g7 g3--c@q->g8 g4--c@q->g9 g5--c@q->g10";
 
 		Map<String, Configuration> configurations = new HashMap<>();
-
+		
+		System.out.println(GlobalTransitionSystem.parse(s, configurations));
+		System.out.println(s);
+		
+		
 		assertTrue(GlobalTransitionSystem.parse(s, configurations)
 				.hasExecution(Configuration.parseList("g0 g1 g2 g3 g4 g5 g10", configurations)));
 		assertTrue(GlobalTransitionSystem.parse(s, configurations)
@@ -56,7 +60,7 @@ class GlobalTransitionSystemTest {
 				.hasExecution(Configuration.parseList("g0 g1 g2 g7 g8 g9 g10", configurations)));
 		assertTrue(GlobalTransitionSystem.parse(s, configurations)
 				.hasExecution(Configuration.parseList("g0 g1 g6 g7 g8 g9 g10", configurations)));
-
+		
 		assertFalse(GlobalTransitionSystem.parse(s, configurations)
 				.hasExecution(Configuration.parseList("g1 g2 g3 g4 g5 g10", configurations)));
 		assertFalse(GlobalTransitionSystem.parse(s, configurations)
@@ -66,7 +70,7 @@ class GlobalTransitionSystemTest {
 		assertFalse(GlobalTransitionSystem.parse(s, configurations)
 				.hasExecution(Configuration.parseList("g0 g1 g2 g3 g4 g5 g11 g10", configurations)));
 	}
-
+	
 	/**
 	 * hasExecutionTest2:
 	 * See exercise I-2a from the exercises on Chapter 2.
