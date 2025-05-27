@@ -1,5 +1,7 @@
 package week2;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,12 +18,76 @@ public class CausalOrder {
 	}
 
 	public CausalOrder(List<Event> sequence) {
-		// TODO
+
+		// loop over all events in sequence 
+		outerLoop:
+		for (int i = 0; i < sequence.size(); i++) {
+			
+			// loop over all events starting from next index outer loop
+			for (int j = i + 1; j < sequence.size(); j++) {
+				
+				// if 2 sequential events in within same process
+				if (sequence.get(i).getProcess() == sequence.get(j).getProcess()) {
+					
+					// create pair and add to pairs
+					// first event first argument, second event last argument
+					pairs.add(new Pair(sequence.get(i), sequence.get(j)));
+					
+					// continue outer loop to avoid chaining
+					continue outerLoop;
+				}
+			}
+		}
+				
+		// loop over all events to create causal relations between send and receive events
+		for (Event e: sequence) {
+			if (e instanceof SendEvent) {
+				SendEvent sendEvent = (SendEvent) e;
+				ReceiveEvent receiveEvent = (ReceiveEvent) sendEvent.getCorrespondingReceiveEvent(sequence);
+				pairs.add(new Pair(sendEvent, receiveEvent));
+			}
+		}
 	}
 
 	public Set<List<Event>> toComputation(Set<Event> events) {
-		// TODO
-		return null;
+		
+		Set<List<Event>> res = new LinkedHashSet<>();
+		List<Event> initialList = new ArrayList<>(events);
+		List<List<Event>> perms = new ArrayList<>();
+		
+		permuteComputation(initialList, 0, perms);
+		
+		for (List<Event> perm: perms) {
+			if (validComputation(perm)) {
+				res.add(perm);
+			}
+		}
+				
+		return res;
+	}
+	
+	private void permuteComputation(
+			List<Event> events, int start, List<List<Event>> res) {
+		
+		if (start == events.size()) {
+			res.add(new ArrayList<>(events));
+			return;
+		}
+		
+		for (int i = start; i < events.size(); i++) {
+			Collections.swap(events, i, start); 
+			permuteComputation(events, start + 1, res);
+			Collections.swap(events,  i,  start);
+		}
+	}
+	
+	private boolean validComputation(List<Event> events) {
+		for (Pair p: pairs) {
+			if (events.indexOf(p.getLeft()) > events.indexOf(p.getRight())) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	/*
