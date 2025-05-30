@@ -30,30 +30,22 @@ public class VectorClock extends LogicalClock<Map<Process, Integer>> {
 					
 					// skip over event if it already has a timestamp
 					if (containsTimestamp(e)) {
-						//System.out.println("Continue after event: " + e);
 						continue;
 					}
 					
 					Map<Process, Integer> maxTimestamp = lastTimestampProcess(e.getProcess());
-					
-					//System.out.println("LastTimestamp process: " + maxTimestamp);
-					
-					//System.out.println("MaxTimestamp: " + maxTimestamp);
 					
 					if (maxTimestamp.isEmpty() ) {
 						for (Process p: sequences.keySet()) {
 							maxTimestamp.put(p,  0);
 						}
 					}
-					
-					//System.out.println("MaxTimestamp update: " + maxTimestamp);
-					
+
 					// if internal or send event
 					// increment timestamp with 1 and add to HashMap
 					if (e instanceof InternalEvent || e instanceof SendEvent) {
 						int i = maxTimestamp.get(e.getProcess());
 						maxTimestamp.put(e.getProcess(), i + 1);
-						//System.out.println("MaxTimestamp after increment: " + maxTimestamp + " at event " + e);
 						addTimestamp(e, maxTimestamp);
 					}
 					
@@ -61,9 +53,6 @@ public class VectorClock extends LogicalClock<Map<Process, Integer>> {
 					else if (e instanceof ReceiveEvent) {
 						SendEvent send = ((ReceiveEvent) e).getCorrespondingSendEvent(allEvents);
 						if (containsTimestamp(send)) {
-							// Map<Process, Integer> timestampSend = getTimestamp(send);
-							// Map<Process, Integer> timestampProcess = lastTimestampProcess(e.getProcess());
-							
 							Map<Process, Integer> maxTimestampBetweenProcesses = maxTimestamp(
 									getTimestamp(send), lastTimestampProcess(e.getProcess()));
 							
@@ -76,11 +65,9 @@ public class VectorClock extends LogicalClock<Map<Process, Integer>> {
 							continue outerLoop;
 						}
 					}
-					System.out.println("All timestamps: " + getTimestamps());
 				}
 			}
 		}
-		//System.out.println("All timestamps: " + getTimestamps());
 	}
 		
 	private Map<Process, Integer> maxTimestamp(
@@ -97,16 +84,11 @@ public class VectorClock extends LogicalClock<Map<Process, Integer>> {
 			return res;
 		}
 		
-		// System.out.println("FirstTimestamp: " + firstTimestamp);
-		
 		for (Process p: firstTimestamp.keySet()) {		
-			// System.out.println("checkpoint reached");
 			if (firstTimestamp.get(p) > secondTimestamp.get(p)) {
-				// System.out.println("Firsttimestamp p value: " + firstTimestamp.get(p));
 				res.put(p,  firstTimestamp.get(p));
 			}
 			else {
-				// System.out.println("Secondtimestamp p value: " + secondTimestamp.get(p));
 				res.put(p,  secondTimestamp.get(p));
 			}
 		}
@@ -118,9 +100,7 @@ public class VectorClock extends LogicalClock<Map<Process, Integer>> {
 		Map<Process, Integer> temp = new LinkedHashMap<>();
 		
 		for (Event e: getTimestamps().keySet()) {
-			//System.out.println("Event: " + e);
 			if (e.getProcess() == p && containsTimestamp(e)) {
-				//System.out.println("Timestamp event : " + getTimestamp(e));
 				temp = maxTimestamp(getTimestamp(e), temp);
 			}
 		}
