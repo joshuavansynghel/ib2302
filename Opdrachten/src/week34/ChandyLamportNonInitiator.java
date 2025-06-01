@@ -5,14 +5,22 @@ import framework.IllegalReceiveException;
 import framework.Message;
 
 public class ChandyLamportNonInitiator extends ChandyLamportProcess {
+	
+	
 
 	@Override
 	public void init() {
-		// TODO
 	}
 	
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		// TODO
+		super.receive(m, c);
+		if (m instanceof ChandyLamportControlMessage) {
+			super.record(c, getChannelState(c));
+		}
+		for (Channel cReceive: super.getOutgoing()) {
+			send(new ChandyLamportControlMessage(), cReceive);
+		}
+		super.startSnapshot();
 	}
 }
