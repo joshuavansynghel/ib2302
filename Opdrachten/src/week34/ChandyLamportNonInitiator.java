@@ -7,7 +7,6 @@ import framework.Message;
 public class ChandyLamportNonInitiator extends ChandyLamportProcess {
 	
 	
-
 	@Override
 	public void init() {
 	}
@@ -15,12 +14,16 @@ public class ChandyLamportNonInitiator extends ChandyLamportProcess {
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
 		super.receive(m, c);
-		if (m instanceof ChandyLamportControlMessage) {
-			super.record(c, getChannelState(c));
+		if (!hasStarted() && (m instanceof ChandyLamportControlMessage)) {
+			startSnapshot();
+			addMessage(m, c);
 		}
 		for (Channel cReceive: super.getOutgoing()) {
 			send(new ChandyLamportControlMessage(), cReceive);
 		}
-		super.startSnapshot();
+		if (!hasStarted()) {
+			super.startSnapshot();
+		}
+		
 	}
 }

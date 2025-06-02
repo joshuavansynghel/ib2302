@@ -206,5 +206,5 @@ class ChandyLamportProcessTest {
 		receiveOrCatch(p, new ChandyLamportControlMessage(), n.getChannel("q", "p"));
 		receiveOrCatch(p, new ChandyLamportBasicMessage("smurf"), n.getChannel("q", "p"));
 		assertEquals(0, p.getChannelState(n.getChannel("q", "p")).size());
-	}
+	}	
 }
