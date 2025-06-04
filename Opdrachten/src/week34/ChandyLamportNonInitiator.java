@@ -20,10 +20,6 @@ public class ChandyLamportNonInitiator extends ChandyLamportProcess {
 		}
 		for (Channel cReceive: super.getOutgoing()) {
 			send(new ChandyLamportControlMessage(), cReceive);
-		}
-		if (!hasStarted()) {
-			super.startSnapshot();
-		}
-		
+		}	
 	}
 }

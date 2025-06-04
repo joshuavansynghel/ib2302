@@ -15,7 +15,6 @@ import framework.Message;
 import framework.Network;
 
 class LaiYangProcessTest {
-
 	/**
 	 * initTest1:
 	 * The initiator should send control messages on its outgoing channels.

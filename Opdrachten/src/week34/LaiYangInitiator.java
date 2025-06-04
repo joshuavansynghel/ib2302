@@ -8,11 +8,14 @@ public class LaiYangInitiator extends LaiYangProcess {
 
 	@Override
 	public void init() {
-		// TODO
+		for (Channel c: getOutgoing()) {
+			send(new LaiYangControlMessage(0), c);
+		}
+		startSnapshot();
 	}
 	
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		// TODO
+		super.receive(m, c);
 	}
 }
