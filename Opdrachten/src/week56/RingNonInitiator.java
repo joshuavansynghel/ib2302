@@ -13,6 +13,10 @@ public class RingNonInitiator extends RingProcess {
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		// TODO
+		super.receive(m,  c);
+		for (Channel cOut: getOutgoing()) {
+			send(new TokenMessage(), cOut);
+		}
+		done();
 	}
 }
