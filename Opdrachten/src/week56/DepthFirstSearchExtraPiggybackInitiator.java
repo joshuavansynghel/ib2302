@@ -8,11 +8,26 @@ public class DepthFirstSearchExtraPiggybackInitiator extends DepthFirstSearchExt
 
 	@Override
 	public void init() {
-		// TODO
+		super.init();
+		send(new TokenWithIdsMessage(getName()), getRandomOutgoingChannels().get(0));
+		removeNextOutgoingChannel();
 	}
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		// TODO
+		super.receive(m, c);
+		if (m instanceof TokenWithIdsMessage) {
+			removeVisitedProcesses((TokenWithIdsMessage) m);
+		}
+		
+		// if token contains id of all outgoing channels, finish algorithm
+		if (getRandomOutgoingChannels().size() == 0) {
+			done();
+		}
+		// else send token to next channel
+		else {
+			send(m, getRandomOutgoingChannels().get(0));
+			removeNextOutgoingChannel();;
+		}
 	}
 }
