@@ -16,6 +16,7 @@ import framework.Network;
 
 class TarryProcessTest {
 
+	
 	/**
 	 * initTest1:
 	 * The initiator does not immediately terminate,
@@ -452,4 +453,5 @@ class TarryProcessTest {
 			assertTrue(((WaveProcess) n.getProcess("q" + i)).isPassive());
 		}
 	}
+	
 }
