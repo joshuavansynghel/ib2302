@@ -9,13 +9,13 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 	@Override
 	public void init() {
 		super.init();
-		Channel futureChild = getRandomOutgoingChannels().get(0);
 		removeNextOutgoingChannel();
-		InfoMessage infomsg = new InfoMessage();
 		for (Channel c: getRandomOutgoingChannels()) {
-			send(infomsg, c);
+			send(new InfoMessage(), c);
 		}
-		send(new TokenMessage(), futureChild);
+		if (incomingAcksFromProcessses.size() == getRandomOutgoingChannels.size()) {
+			send(new TokenMessage(), c);
+		}
 	}
 
 	@Override

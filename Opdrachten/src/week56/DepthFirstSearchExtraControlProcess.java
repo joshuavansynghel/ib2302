@@ -5,12 +5,15 @@ import java.util.Collections;
 import java.util.List;
 
 import framework.Channel;
+import framework.Process;
 import framework.IllegalReceiveException;
 import framework.Message;
 
 public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 
 	private List<Channel> randomOutgoingChannels;
+	private List<Process> incomingInfoFromProcessses = new ArrayList<>();
+	private List<Process> incomingAcksFromProcessses = new ArrayList<>();
 
 	@Override
 	public void init() {
@@ -24,8 +27,20 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 				(m instanceof AckMessage))) {
 			throw new IllegalReceiveException();
 		}
+		// if process is done, it should not receive a token
 		else if ((m instanceof TokenMessage) && isPassive()) {
 			throw new IllegalReceiveException();
+		}
+		else if (m instanceof InfoMessage) {
+			// add process to list of process who have sent token
+			incomingInfoFromProcessses.add((Process)c.getSender());
+			
+			// send ack message in reverse direction
+			send(new AckMessage(), getReversedChannel(c));
+		}
+		else if (m instanceof AckMessage) {
+			// capture all acks if you have sent the info message
+			incomingAcksFromProcessses.add(c.getSender());
 		}
 	}
 
@@ -47,6 +62,22 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		randomOutgoingChannels.remove(c);
 	}
 	
+	protected List<Process> getIncomingInfoFromProcessses () {
+		return incomingInfoFromProcessses;
+	}
+	
+	protected List<Process> getIncomingAcksFromProcessses () {
+		return incomingAcksFromProcessses;
+	}
+	
+	protected List<Channel> getReversedChannels(List<Channel> channels) {
+		List<Channel> reversedChannels = new ArrayList<>();
+		for (Channel c : channels) {
+			reversedChannels.add(getReversedChannel(c));
+		}
+		return reversedChannels;
+	}
+	
 	protected Channel getReversedChannel (Channel c) {
 		Channel reversedChannel = null;
 		for (Channel cOut: getOutgoing()) {
@@ -55,5 +86,22 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 			}
 		}
 		return reversedChannel;
+	}
+	
+	// reset the list of incoming acks from processes
+	// is needed if this process sends a token multiple times
+	protected void resetIncomingAcksProcesses () {
+		incomingAcksFromProcessses = new ArrayList<>();
+	}
+	
+	protected boolean listContainsSameProcessses (List<Process> p1, List<Channel> p2) {
+		// check if channels in c1 exists in c2
+		for (Process p: p1) {
+			if (!p2.contains(p)) {
+				return false;
+			}
+		}
+		// final check that sizes must be equal
+		return p1.size() == p2.size();
 	}
 }

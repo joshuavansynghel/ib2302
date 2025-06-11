@@ -16,7 +16,7 @@ import framework.Message;
 import framework.Channel;
 import framework.Network;
 
-class DepthFirstSearchExtraControlProcessTest {
+class DepthFirstSearchExtraControlProcessTestBackup {
 
 	/**
 	 * initTest1:
@@ -699,4 +699,5 @@ class DepthFirstSearchExtraControlProcessTest {
 			assertTrue(((WaveProcess) n.getProcess("q" + i)).isPassive());
 		}
 	}
+
 }
