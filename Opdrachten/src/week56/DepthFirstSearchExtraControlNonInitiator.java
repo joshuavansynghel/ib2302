@@ -13,6 +13,6 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		// TODO
+		super.receive(m, c);
 	}
 }
