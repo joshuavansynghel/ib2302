@@ -9,17 +9,22 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 	@Override
 	public void init() {
 		super.init();
+		Channel futureChild = getRandomOutgoingChannels().get(0);
 		removeNextOutgoingChannel();
 		for (Channel c: getRandomOutgoingChannels()) {
 			send(new InfoMessage(), c);
 		}
-		if (incomingAcksFromProcessses.size() == getRandomOutgoingChannels.size()) {
-			send(new TokenMessage(), c);
+		if (getIncomingInfoFromProcesses().size() == getRandomOutgoingChannels().size()) {
+			send(new TokenMessage(), futureChild);
 		}
 	}
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
 		super.receive(m, c);
+		// if all tokens received, finish algorithm
+		if (getIncomingInfoFromProcesses().size() == getOutgoing().size()) {
+			done();
+		}
 	}
 }

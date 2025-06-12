@@ -33,7 +33,7 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		}
 		else if (m instanceof InfoMessage) {
 			// add process to list of process who have sent token
-			incomingInfoFromProcessses.add((Process)c.getSender());
+			incomingInfoFromProcessses.add(c.getSender());
 			
 			// send ack message in reverse direction
 			send(new AckMessage(), getReversedChannel(c));
@@ -41,6 +41,11 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		else if (m instanceof AckMessage) {
 			// capture all acks if you have sent the info message
 			incomingAcksFromProcessses.add(c.getSender());
+		}
+
+		// if all incoming channels, have sent info message, finish algorithm
+		if (allIncomingProcessesHaveSentInfo()) {
+			done();
 		}
 	}
 
@@ -62,11 +67,11 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		randomOutgoingChannels.remove(c);
 	}
 	
-	protected List<Process> getIncomingInfoFromProcessses () {
+	protected List<Process> getIncomingInfoFromProcesses () {
 		return incomingInfoFromProcessses;
 	}
 	
-	protected List<Process> getIncomingAcksFromProcessses () {
+	protected List<Process> getIncomingAcksFromProcesses () {
 		return incomingAcksFromProcessses;
 	}
 	
@@ -103,5 +108,14 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		}
 		// final check that sizes must be equal
 		return p1.size() == p2.size();
+	}
+
+	protected boolean allIncomingProcessesHaveSentInfo () {
+		for (Channel c : getIncoming()) {
+			if (!getIncomingInfoFromProcesses().contains(c.getSender())) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
