@@ -22,9 +22,22 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
 		super.receive(m, c);
+		//System.out.println("Ack sent status: " + allIncomingProcessesHaveSentAck());
+		System.out.println("Random outgoing: " + getRandomOutgoingChannels());
+		System.out.println("Ack messages: " + getIncomingAcksFromProcesses());
 		// if all tokens received, finish algorithm
-		if (getIncomingInfoFromProcesses().size() == getOutgoing().size()) {
-			done();
+		if (m instanceof TokenMessage) {
+			if (allIncomingProcessesHaveSentInfo()) {
+				done();
+			}
 		}
+		else if (allIncomingProcessesHaveSentAck() &&
+				(!getRandomOutgoingChannels().isEmpty())) {
+			send (new TokenMessage(), getRandomOutgoingChannels().get(0));
+			removeNextOutgoingChannel();
+			System.out.println("\nReset Ack list");
+			resetIncomingAcksProcesses();
+		}
+
 	}
 }

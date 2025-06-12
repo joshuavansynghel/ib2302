@@ -12,8 +12,8 @@ import framework.Message;
 public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 
 	private List<Channel> randomOutgoingChannels;
-	private List<Process> incomingInfoFromProcessses = new ArrayList<>();
-	private List<Process> incomingAcksFromProcessses = new ArrayList<>();
+	private List<Process> incomingInfoFromProcesses = new ArrayList<>();
+	private List<Process> incomingAcksFromProcesses = new ArrayList<>();
 
 	@Override
 	public void init() {
@@ -22,6 +22,9 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
+		System.out.println("Message: " + m + " received from channel " + c);
+		//System.out.println("Passive status: " + isPassive());
+		
 		// invalid message
 		if (!((m instanceof TokenMessage) || (m instanceof InfoMessage) ||
 				(m instanceof AckMessage))) {
@@ -33,22 +36,22 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		}
 		else if (m instanceof InfoMessage) {
 			// add process to list of process who have sent token
-			incomingInfoFromProcessses.add(c.getSender());
+			getIncomingInfoFromProcesses().add(c.getSender());
+			
+			// remove process from  outgoing channels
+			removeSpecificOutgoingChannel(getReversedChannel(c));
 			
 			// send ack message in reverse direction
 			send(new AckMessage(), getReversedChannel(c));
 		}
 		else if (m instanceof AckMessage) {
 			// capture all acks if you have sent the info message
-			incomingAcksFromProcessses.add(c.getSender());
+			getIncomingAcksFromProcesses().add(c.getSender());
 		}
-
-		// if all incoming channels, have sent info message, finish algorithm
-		if (allIncomingProcessesHaveSentInfo()) {
-			done();
-		}
+//		System.out.println("Incoming acks: " + getIncomingAcksFromProcesses());
+//		System.out.println("Incoming info: " + getIncomingInfoFromProcesses());
 	}
-
+	
 	protected void randomizeOutgoingChannels () {
 	List<Channel> outgoingChannels = new ArrayList<>(getOutgoing());
 	Collections.shuffle(outgoingChannels);
@@ -68,11 +71,11 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 	}
 	
 	protected List<Process> getIncomingInfoFromProcesses () {
-		return incomingInfoFromProcessses;
+		return incomingInfoFromProcesses;
 	}
 	
 	protected List<Process> getIncomingAcksFromProcesses () {
-		return incomingAcksFromProcessses;
+		return incomingAcksFromProcesses;
 	}
 	
 	protected List<Channel> getReversedChannels(List<Channel> channels) {
@@ -96,10 +99,10 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 	// reset the list of incoming acks from processes
 	// is needed if this process sends a token multiple times
 	protected void resetIncomingAcksProcesses () {
-		incomingAcksFromProcessses = new ArrayList<>();
+		incomingAcksFromProcesses = new ArrayList<>();
 	}
 	
-	protected boolean listContainsSameProcessses (List<Process> p1, List<Channel> p2) {
+	protected boolean listContainsSameProcessses (List<Process> p1, List<Process> p2) {
 		// check if channels in c1 exists in c2
 		for (Process p: p1) {
 			if (!p2.contains(p)) {
@@ -113,6 +116,15 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 	protected boolean allIncomingProcessesHaveSentInfo () {
 		for (Channel c : getIncoming()) {
 			if (!getIncomingInfoFromProcesses().contains(c.getSender())) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	protected boolean allIncomingProcessesHaveSentAck () {
+		for (Channel c : getRandomOutgoingChannels()) {
+			if (!getIncomingAcksFromProcesses().contains(c.getReceiver())) {
 				return false;
 			}
 		}
