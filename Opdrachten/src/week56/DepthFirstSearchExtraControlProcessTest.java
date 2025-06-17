@@ -18,47 +18,30 @@ import framework.Network;
 
 class DepthFirstSearchExtraControlProcessTest {
 
+
+
 	/**
-	 * receiveTest3:
-	 * Initiator receiving TOKEN after finishing: exception.
+	 * receiveTest4:
+	 * Non-initiator receiving TOKEN after finishing: exception.
 	 */
 	@Test
-	void receiveTest3() {
-		Network n = Network.parse(true, "p:week56.DepthFirstSearchExtraControlInitiator");
-		for (int i = 0; i < 5; i++) {
-			n.addProcess("q" + i, "week56.DepthFirstSearchExtraControlNonInitiator");
-		}
-		n.makeComplete();
+	void receiveTest4() {
+		Network n = Network.parse(true, "p:week56.DepthFirstSearchExtraControlInitiator q,r,s:week56.DepthFirstSearchExtraControlNonInitiator").makeComplete();
 
-		WaveProcess p = (WaveProcess) n.getProcess("p");
-		p.init();
+		WaveProcess q = (WaveProcess) n.getProcess("q");
+		q.init();
 
-		int child = -1;
+		receiveOrCatch(q, new InfoMessage(), n.getChannel("p", "q"));
+		receiveOrCatch(q, new InfoMessage(), n.getChannel("r", "q"));
 
-		// Receive all acks
-		for (int i = 0; i < 5; i++) {
-			if (n.getChannel("p", "q" + i).getContent().size() != 0) {
-				receiveOrCatch(p, new AckMessage(), n.getChannel("q" + i, "p"));
-			} else {
-				assertEquals(-1, child);
-				child = i;
-			}
-		}
-		assertNotEquals(-1, child);
+		receiveOrCatch(q, new TokenMessage(), n.getChannel("s", "q"));
 
-		// Receive all info
-		for (int i = 0; i < 5; i++) {
-			if (i != child) {
-				receiveOrCatch(p, new InfoMessage(), n.getChannel("q" + i, "p"));
-			}
-		}
+		receiveOrCatch(q, new AckMessage(), n.getChannel("p", "q"));
+		receiveOrCatch(q, new AckMessage(), n.getChannel("r", "q"));
 
-		// Receive token back from child
-		receiveOrCatch(p, new TokenMessage(), n.getChannel("q" + child, "p"));
+		assertTrue(q.isPassive());
 
-		assertTrue(p.isPassive());
-
-		assertThrows(IllegalReceiveException.class, () -> p.receive(new TokenMessage(), n.getChannel("q17", "p")));
+		assertThrows(IllegalReceiveException.class, () -> q.receive(new TokenMessage(), n.getChannel("p", "q")));
 	}
 
 }

@@ -16,11 +16,18 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
+		// initialize outgoing channels if not present yet
+		if ((getRandomOutgoingChannels() == null) && (getParent() == null)) {
+			super.init();
+		}
+		
+		// call superclass receive
 		super.receive(m, c);
+		
+		// if first time token message, add process as parent
 		if ((m instanceof TokenMessage) && getParent() == null) {
 			Process p = c.getSender();
 			setParent(p);
-			super.init();
 			removeSpecificOutgoingChannel(getOutgoingToParent(p));
 		}
 		
@@ -60,10 +67,13 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 		if (allIncomingProcessesHaveSentInfo() && 
 				allIncomingProcessesHaveSentAck() && 
 				getHasReceivedToken()) {
+			System.out.println("Get random outgoing : " + getRandomOutgoingChannels());
+			System.out.println("Checkpont 1");
 			done();
 		}
 		else if (allIncomingProcessesHaveSentAck() &&
 				(!getRandomOutgoingChannels().isEmpty())) {
+			System.out.println("Checkpont 2");
 			send (new TokenMessage(), getRandomOutgoingChannels().get(0));
 			removeNextOutgoingChannel();
 		}

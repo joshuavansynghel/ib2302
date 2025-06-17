@@ -22,8 +22,7 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		System.out.println("Message: " + m + " received from channel " + c);
-		//System.out.println("Passive status: " + isPassive());
+		System.out.println("\nMessage: " + m + " received from channel " + c);
 		
 		// invalid message
 		if (!((m instanceof TokenMessage) || (m instanceof InfoMessage) ||
@@ -35,11 +34,9 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 			throw new IllegalReceiveException();
 		}
 		else if (m instanceof InfoMessage) {
+		
 			// add process to list of process who have sent token
 			getIncomingInfoFromProcesses().add(c.getSender());
-			
-			// remove process from  outgoing channels
-			removeSpecificOutgoingChannel(getReversedChannel(c));
 			
 			// send ack message in reverse direction
 			send(new AckMessage(), getReversedChannel(c));
@@ -47,6 +44,11 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		else if (m instanceof AckMessage) {
 			// capture all acks if you have sent the info message
 			getIncomingAcksFromProcesses().add(c.getSender());
+			System.out.println("Incoming acks: " + getIncomingAcksFromProcesses());
+		}
+		else if (m instanceof TokenMessage) {
+			// add process to list of process who have sent token
+			getIncomingInfoFromProcesses().add(c.getSender());
 		}
 //		System.out.println("Incoming acks: " + getIncomingAcksFromProcesses());
 //		System.out.println("Incoming info: " + getIncomingInfoFromProcesses());
@@ -114,6 +116,7 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 	}
 
 	protected boolean allIncomingProcessesHaveSentInfo () {
+		System.out.println("Incoming info from processes: " + getIncomingInfoFromProcesses());
 		for (Channel c : getIncoming()) {
 			if (!getIncomingInfoFromProcesses().contains(c.getSender())) {
 				return false;
