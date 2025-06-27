@@ -12,12 +12,12 @@ import framework.Message;
 public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 
 	private List<Channel> randomOutgoingChannels;
-	private List<Process> incomingInfoFromProcesses = new ArrayList<>();
-	private List<Process> incomingAcksFromProcesses = new ArrayList<>();
+	private List<Channel> channelsThatNeedToSendAck;
 
 	@Override
 	public void init() {
 		randomizeOutgoingChannels();
+		initChannelsThatNeedToSendAck();
 	}
 
 	@Override
@@ -33,31 +33,32 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		else if ((m instanceof TokenMessage) && isPassive()) {
 			throw new IllegalReceiveException();
 		}
-		else if (m instanceof InfoMessage) {
-		
-			// add process to list of process who have sent token
-			getIncomingInfoFromProcesses().add(c.getSender());
-			
-			// send ack message in reverse direction
-			send(new AckMessage(), getReversedChannel(c));
+		// incoming channel should not have sent ack message
+		else if (m instanceof AckMessage && 
+				!(getChannelsThatNeedToSendAck().contains(c))) {
+			throw new IllegalReceiveException();
 		}
 		else if (m instanceof AckMessage) {
-			// capture all acks if you have sent the info message
-			getIncomingAcksFromProcesses().add(c.getSender());
-			System.out.println("Incoming acks: " + getIncomingAcksFromProcesses());
+			
+			removeChannelThatNeedToSendAck(c);
+		}
+		else if (m instanceof InfoMessage) {
+			// don't send future token through reversed outgoing channel
+			removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
+			
+			// send ack message in reverse direction
+			send(new AckMessage(), getIncomingToOutgoing(c));
 		}
 		else if (m instanceof TokenMessage) {
-			// add process to list of process who have sent token
-			getIncomingInfoFromProcesses().add(c.getSender());
+			// don't send token to channels who have have sent token themselves
+			removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
 		}
-//		System.out.println("Incoming acks: " + getIncomingAcksFromProcesses());
-//		System.out.println("Incoming info: " + getIncomingInfoFromProcesses());
 	}
 	
 	protected void randomizeOutgoingChannels () {
-	List<Channel> outgoingChannels = new ArrayList<>(getOutgoing());
-	Collections.shuffle(outgoingChannels);
-	randomOutgoingChannels = outgoingChannels;
+		List<Channel> outgoingChannels = new ArrayList<>(getOutgoing());
+		Collections.shuffle(outgoingChannels);
+		randomOutgoingChannels = outgoingChannels;
 	}
 	
 	protected List<Channel> getRandomOutgoingChannels () {
@@ -72,23 +73,27 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		randomOutgoingChannels.remove(c);
 	}
 	
-	protected List<Process> getIncomingInfoFromProcesses () {
-		return incomingInfoFromProcesses;
+	private void initChannelsThatNeedToSendAck () {
+		channelsThatNeedToSendAck = new ArrayList<>(getIncoming());
 	}
 	
-	protected List<Process> getIncomingAcksFromProcesses () {
-		return incomingAcksFromProcesses;
+	protected List<Channel> getChannelsThatNeedToSendAck () {
+		return channelsThatNeedToSendAck;
+	}
+	
+	protected void removeChannelThatNeedToSendAck (Channel c) {
+		channelsThatNeedToSendAck.remove(c);
 	}
 	
 	protected List<Channel> getReversedChannels(List<Channel> channels) {
 		List<Channel> reversedChannels = new ArrayList<>();
 		for (Channel c : channels) {
-			reversedChannels.add(getReversedChannel(c));
+			reversedChannels.add(getIncomingToOutgoing(c));
 		}
 		return reversedChannels;
 	}
 	
-	protected Channel getReversedChannel (Channel c) {
+	protected Channel getIncomingToOutgoing (Channel c) {
 		Channel reversedChannel = null;
 		for (Channel cOut: getOutgoing()) {
 			if (cOut.getReceiver() == c.getSender()) {
@@ -98,39 +103,13 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		return reversedChannel;
 	}
 	
-	// reset the list of incoming acks from processes
-	// is needed if this process sends a token multiple times
-	protected void resetIncomingAcksProcesses () {
-		incomingAcksFromProcesses = new ArrayList<>();
-	}
-	
-	protected boolean listContainsSameProcessses (List<Process> p1, List<Process> p2) {
-		// check if channels in c1 exists in c2
-		for (Process p: p1) {
-			if (!p2.contains(p)) {
-				return false;
+	protected Channel getOutgoingToIncoming (Channel c) {
+		Channel reversedChannel = null;
+		for (Channel cIn: getIncoming()) {
+			if (cIn.getReceiver() == c.getSender()) {
+				reversedChannel = cIn;
 			}
 		}
-		// final check that sizes must be equal
-		return p1.size() == p2.size();
-	}
-
-	protected boolean allIncomingProcessesHaveSentInfo () {
-		System.out.println("Incoming info from processes: " + getIncomingInfoFromProcesses());
-		for (Channel c : getIncoming()) {
-			if (!getIncomingInfoFromProcesses().contains(c.getSender())) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	protected boolean allIncomingProcessesHaveSentAck () {
-		for (Channel c : getRandomOutgoingChannels()) {
-			if (!getIncomingAcksFromProcesses().contains(c.getReceiver())) {
-				return false;
-			}
-		}
-		return true;
+		return reversedChannel;
 	}
 }

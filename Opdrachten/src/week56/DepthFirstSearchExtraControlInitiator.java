@@ -11,10 +11,19 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 		super.init();
 		Channel futureChild = getRandomOutgoingChannels().get(0);
 		removeNextOutgoingChannel();
+		
+		System.out.println("INcoming: " + getIncoming());
+		System.out.println("Ack channels: " + getChannelsThatNeedToSendAck());
+		removeChannelThatNeedToSendAck(getIncomingToOutgoing(futureChild));
+		
+		
+		// send info message to all outgoing channels except future child
 		for (Channel c: getRandomOutgoingChannels()) {
 			send(new InfoMessage(), c);
 		}
-		if (getIncomingInfoFromProcesses().size() == getRandomOutgoingChannels().size()) {
+		
+		// in case no outgoing channels remain, send token message
+		if (getRandomOutgoingChannels().size() == 0) {
 			send(new TokenMessage(), futureChild);
 		}
 	}
@@ -22,30 +31,19 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
 		super.receive(m, c);
-		
-		//System.out.println("Ack sent status: " + allIncomingProcessesHaveSentAck());
-		System.out.println("Random outgoing: " + getRandomOutgoingChannels());
-		System.out.println("Ack messages: " + getIncomingAcksFromProcesses());
-		
-		// if all tokens received, finish algorithm
-		System.out.println("all process have sent ack: " + allIncomingProcessesHaveSentAck());
-		
+
 		// if token received an all channels have sent info or token, finish
-		if ((m instanceof TokenMessage) && allIncomingProcessesHaveSentInfo()) {
-			//System.out.println("\nAll incoming processes have sent info.");
+		if ((m instanceof TokenMessage) && getRandomOutgoingChannels().isEmpty()) {
 			done();
-			//System.out.println("Done status: " + isPassive() + "\n\n");
 		}
 		// if process still holds token and all acks are received
 		// forward token to next process
-		else if (allIncomingProcessesHaveSentAck() &&
+		else if (getChannelsThatNeedToSendAck().isEmpty() &&
 				(!getRandomOutgoingChannels().isEmpty())) {
 			send (new TokenMessage(), getRandomOutgoingChannels().get(0));
 			removeNextOutgoingChannel();
-			System.out.println("\nReset Ack list");
-			resetIncomingAcksProcesses();
 		}
-		// if token was received and not all processes have sent info message
+		// if token was received and not all outgoing processes have received token
 		// forward token to next process
 		else if (m instanceof TokenMessage) {
 			send (new TokenMessage(), getRandomOutgoingChannels().get(0));
