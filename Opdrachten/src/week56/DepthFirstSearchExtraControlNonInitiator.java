@@ -1,5 +1,8 @@
 package week56;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import framework.Channel;
 import framework.IllegalReceiveException;
 import framework.Message;
@@ -8,7 +11,6 @@ import framework.Process;
 public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchExtraControlProcess {
 
 	private Process parent;
-	private boolean hasReceivedToken = false;
 	
 	@Override
 	public void init() {
@@ -28,55 +30,33 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 		if ((m instanceof TokenMessage) && getParent() == null) {
 			Process p = c.getSender();
 			setParent(p);
-			removeSpecificOutgoingChannel(getOutgoingToParent(p));
+			removeChannelThatNeedToSendAck(c);
 		}
 		
+		System.out.println("Outgoing Channels: " + getRandomOutgoingChannels());
+		
 		if (m instanceof TokenMessage) {
-			// if first time receiving token, set to  true
-			if (!getHasReceivedToken()) {
-				setHasReceivedToken();
-			}
-			
-			// add parent to lists to avoid sending info or ack messages
-			getIncomingInfoFromProcesses().add(c.getSender());
-			getIncomingAcksFromProcesses().add(c.getSender());
-			
 			// if no outgoing channels remain, send token back to parent
 			if (getRandomOutgoingChannels().isEmpty()) {
 				send(m, getOutgoingToParent(getParent()));
+				done();
 			}
-			// else send info messages to each remaining outgoing channel 
 			else {
 				Channel futureChild = getRandomOutgoingChannels().get(0);
 				removeNextOutgoingChannel();
-				resetIncomingAcksProcesses();
-				for (Channel cOut: getRandomOutgoingChannels()) {
-					send(new InfoMessage(), cOut);
-				}
+				removeChannelThatNeedToSendAck(getOutgoingToIncoming(futureChild));
 				
-				// if no remaining outgoing channels
-				// don't wait for ack message but send token forward
-				if (getRandomOutgoingChannels().size() == 0) {
-					send(new TokenMessage(), futureChild);
+				if (getRandomOutgoingChannels().isEmpty()) {
+					send(m, futureChild);
+					System.out.println("AckChannels: " + getChannelsThatNeedToSendAck());
+				}
+							
+				for (Channel cAck : getReversedChannels(getChannelsThatNeedToSendAck())) {
+					send (new InfoMessage(), cAck);
 				}
 			}
 		}
-			
-		// if all incoming channels, have sent info message and this process
-		// received token at least once and all acks received, finish algorithm
-		if (allIncomingProcessesHaveSentInfo() && 
-				allIncomingProcessesHaveSentAck() && 
-				getHasReceivedToken()) {
-			System.out.println("Get random outgoing : " + getRandomOutgoingChannels());
-			System.out.println("Checkpont 1");
-			done();
-		}
-		else if (allIncomingProcessesHaveSentAck() &&
-				(!getRandomOutgoingChannels().isEmpty())) {
-			System.out.println("Checkpont 2");
-			send (new TokenMessage(), getRandomOutgoingChannels().get(0));
-			removeNextOutgoingChannel();
-		}
+
 	}
 	
 	public Process getParent() {
@@ -96,12 +76,5 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 		}
 		return channelToParent;
 	}
-	
-	private void setHasReceivedToken () {
-		this.hasReceivedToken = true;
-	}
-	
-	private boolean getHasReceivedToken() {
-		return hasReceivedToken;
-	}
+
 }
