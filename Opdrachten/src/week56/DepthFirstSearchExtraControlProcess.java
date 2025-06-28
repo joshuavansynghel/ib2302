@@ -23,6 +23,8 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
 		System.out.println("\nMessage: " + m + " received from channel " + c);
+		System.out.println("Outgoing channels: " + getRandomOutgoingChannels());
+		System.out.println("Incoming acks: " + getChannelsThatNeedToSendAck());
 		
 		// invalid message
 		if (!((m instanceof TokenMessage) || (m instanceof InfoMessage) ||
@@ -106,7 +108,7 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 	protected Channel getOutgoingToIncoming (Channel c) {
 		Channel reversedChannel = null;
 		for (Channel cIn: getIncoming()) {
-			if (cIn.getReceiver() == c.getSender()) {
+			if (cIn.getSender() == c.getReceiver()) {
 				reversedChannel = cIn;
 			}
 		}
