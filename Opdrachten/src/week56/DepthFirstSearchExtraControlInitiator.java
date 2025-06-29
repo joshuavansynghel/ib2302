@@ -11,11 +11,7 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 		super.init();
 		Channel futureChild = getRandomOutgoingChannels().get(0);
 		removeNextOutgoingChannel();
-		
-		System.out.println("INcoming: " + getIncoming());
-		System.out.println("Ack channels: " + getChannelsThatNeedToSendAck());
-		removeChannelThatNeedToSendAck(getIncomingToOutgoing(futureChild));
-		
+		removeChannelThatNeedToSendAck(getOutgoingToIncoming(futureChild));
 		
 		// send info message to all outgoing channels except future child
 		for (Channel c: getRandomOutgoingChannels()) {
@@ -31,6 +27,13 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
 		super.receive(m, c);
+		
+		System.out.println("Ack channels: " + getChannelsThatNeedToSendAck());
+		System.out.println("Outgoing Channels: " + getRandomOutgoingChannels());
+		
+		if (m instanceof TokenMessage) {
+			removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
+		}
 
 		// if token received an all channels have sent info or token, finish
 		if ((m instanceof TokenMessage) && getRandomOutgoingChannels().isEmpty()) {
@@ -40,6 +43,7 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 		// forward token to next process
 		else if (getChannelsThatNeedToSendAck().isEmpty() &&
 				(!getRandomOutgoingChannels().isEmpty())) {
+			System.out.println("breakpoint");
 			send (new TokenMessage(), getRandomOutgoingChannels().get(0));
 			removeNextOutgoingChannel();
 		}

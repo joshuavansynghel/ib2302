@@ -51,10 +51,12 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 			// send ack message in reverse direction
 			send(new AckMessage(), getIncomingToOutgoing(c));
 		}
+		/**
 		else if (m instanceof TokenMessage) {
 			// don't send token to channels who have have sent token themselves
 			removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
 		}
+		**/
 	}
 	
 	protected void randomizeOutgoingChannels () {

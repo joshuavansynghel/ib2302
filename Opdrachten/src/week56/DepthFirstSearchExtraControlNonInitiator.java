@@ -27,6 +27,12 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 		// call superclass receive
 		super.receive(m, c);
 		
+		// non-initiator should not receive acks if it hasn't received token from parent
+		if (m instanceof AckMessage && getParent() == null) {
+			throw new IllegalReceiveException();
+		}
+		
+		// logic for token message
 		if (m instanceof TokenMessage) {
 			
 			// if first time receiving token, set parent
@@ -34,39 +40,75 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 				Process p = c.getSender();
 				setParent(p);
 				removeChannelThatNeedToSendAck(c);
-			}
-			
-			
-			// if no outgoing channels left, forward to parent
-			if (getRandomOutgoingChannels().isEmpty() &&
-					getChannelsThatNeedToSendAck().isEmpty()) {
-				send(m, getOutgoingToParent(getParent()));
-				done();
-			}
-			else if (getRandomOutgoingChannels().isEmpty()) {
-				for (Channel cAck : getReversedChannels(getChannelsThatNeedToSendAck())) {
-					send (new InfoMessage(), cAck);
-				}
-			}
-			else {
-				setChannelToFutureChild(getRandomOutgoingChannels().get(0));
-				removeNextOutgoingChannel();
-				removeChannelThatNeedToSendAck(getOutgoingToIncoming(getChannelToFutureChild()));
-
-				// else send info messages to each all outgoing channels
-				// except parent and future child
-				for (Channel cAck : getReversedChannels(getChannelsThatNeedToSendAck())) {
-					System.out.println("send info to " + cAck);
-					send (new InfoMessage(), cAck);
-				}
+				removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
 				
+				// if channel only has 1 incoming channel which is the parent, send token back
+				if (getChannelsThatNeedToSendAck().isEmpty()) {
+					send(m, getOutgoingToParent(getParent()));
+					removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
+					done();
+				}
+				// if all channels have already received token
+				// send info to all channels with exception of parent
+				else if (getRandomOutgoingChannels().isEmpty()) {
+					for (Channel cAck : getReversedChannels(getChannelsThatNeedToSendAck())) {
+						System.out.println("Send info to " + cAck);
+						send(new InfoMessage(), cAck);
+					}
+				}
+				else {
+					// set first future child and remove from info channels
+					setChannelToFutureChild(getRandomOutgoingChannels().get(0));
+					removeChannelThatNeedToSendAck(getOutgoingToIncoming(getChannelToFutureChild()));
+					
+					// if only 2 channels remain, parent and child, forward token immediately
+					if (getChannelsThatNeedToSendAck().isEmpty()) {
+						send(m, getChannelToFutureChild());
+					}
+					else {
+						// send info message to each remaining info channel
+						for (Channel cAck : getReversedChannels(getChannelsThatNeedToSendAck())) {
+							System.out.println("Send info to " + cAck);
+							send(new InfoMessage(), cAck);
+						}
+					}
+				}
+			}
+			// if token was received back from a child
+			else if (getIncomingToOutgoing(c) == getChannelToFutureChild()) {
+				removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
+				
+				// if only parent remains as outgoing channel, return token to parent
 				if (getRandomOutgoingChannels().isEmpty()) {
+					send(m, getOutgoingToParent(getParent()));
+					removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
+					done();
+				}
+				else {
+					// set next future child and remove from info channels
+					setChannelToFutureChild(getRandomOutgoingChannels().get(0));
+					removeChannelThatNeedToSendAck(getOutgoingToIncoming(getChannelToFutureChild()));
+					
 					send(new TokenMessage(), getChannelToFutureChild());
 				}
 			}
 		}
 			
 		if (m instanceof AckMessage && getChannelsThatNeedToSendAck().isEmpty()) {
+			// if only parent remains as outgoing channel, return token to parent
+			if (getRandomOutgoingChannels().isEmpty()) {
+				send(m, getOutgoingToParent(getParent()));
+				removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
+				done();
+			}
+			else {
+				// set first child and remove from info channels
+				//setChannelToFutureChild(getRandomOutgoingChannels().get(0));
+				System.out.println("Token send to child: " + getChannelToFutureChild());
+				send(new TokenMessage(), getChannelToFutureChild());
+			}
+		}
+			/**
 			//done();
 			if (getChannelToFutureChild() == null) {
 				send(new TokenMessage(), getOutgoingToParent(getParent()));
@@ -75,7 +117,7 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 				System.out.println("Send Token to child: " + getChannelToFutureChild());
 				send(new TokenMessage(), getChannelToFutureChild());
 			}
-		}
+			**/
 	}
 	
 	public Process getParent() {
