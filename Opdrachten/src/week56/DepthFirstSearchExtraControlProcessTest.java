@@ -18,45 +18,34 @@ import framework.Network;
 
 class DepthFirstSearchExtraControlProcessTest {
 
-
 	/**
-	 * receiveTest17:
-	 * Initiator should first wait for all ACKs, and then send TOKEN to child
+	 * simulationTest1:
+	 * Simulate a full run of the protocol.
+	 * All processes should be finished at the end.
 	 */
 	@Test
-	void receiveTest17() {
-		Network n = Network.parse(true, "p:week56.DepthFirstSearchExtraControlInitiator q,r,s:week56.DepthFirstSearchExtraControlNonInitiator").makeComplete();
+	void simulationTest1() {
+		Network n = Network.parse(true, "p:week56.DepthFirstSearchExtraControlInitiator");
+		for (int i = 0; i < 2; i++) {
+			n.addProcess("q" + i, "week56.DepthFirstSearchExtraControlNonInitiator");
+		}
+		n.makeComplete();
+		Map<String, Collection<String>> output = new HashMap<String, Collection<String>>();
 
-		WaveProcess p = (WaveProcess) n.getProcess("p");
-		p.init();
-
-		String child = "";
-		String nonchild1 = "";
-		String nonchild2 = "";
-		if (n.getChannel("p", "q").getContent().size() == 0) {
-			child = "q";
-			nonchild1 = "r";
-			nonchild2 = "s";
-		} else if (n.getChannel("p", "r").getContent().size() == 0) {
-			child = "r";
-			nonchild1 = "q";
-			nonchild2 = "s";
-		} else {
-			child = "s";
-			nonchild1 = "q";
-			nonchild2 = "r";
+		try {
+			assertTrue(n.simulate(output));
+		} catch (IllegalReceiveException e) {
+			e.printStackTrace();
+			System.exit(0);
+			assertTrue(false);
 		}
 
-		assertEquals(0, n.getChannel("p", child).getContent().size());
-
-		receiveOrCatch(p, new AckMessage(), n.getChannel(nonchild1, "p"));
-		assertEquals(0, n.getChannel("p", child).getContent().size());
-
-		receiveOrCatch(p, new AckMessage(), n.getChannel(nonchild2, "p"));
-		assertEquals(1, n.getChannel("p", child).getContent().size());
-		assertTrue(n.getChannel("p", child).getContent().iterator().next() instanceof TokenMessage);
+		// No output, check internal state
+		// All processes should have finished
+		assertTrue(((WaveProcess) n.getProcess("p")).isPassive());
+		for (int i = 0; i < 2; i++) {
+			assertTrue(((WaveProcess) n.getProcess("q" + i)).isPassive());
+		}
 	}
 
-	
-	
 }

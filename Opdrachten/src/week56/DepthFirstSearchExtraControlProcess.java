@@ -13,6 +13,8 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 
 	private List<Channel> randomOutgoingChannels;
 	private List<Channel> channelsThatNeedToSendAck;
+	private Channel channelToFutureChild; 
+	
 
 	@Override
 	public void init() {
@@ -87,6 +89,14 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 	
 	protected void removeChannelThatNeedToSendAck (Channel c) {
 		channelsThatNeedToSendAck.remove(c);
+	}
+	
+	protected void setChannelToFutureChild (Channel c) {
+		channelToFutureChild = c;
+	}
+	
+	protected Channel getChannelToFutureChild () {
+		return channelToFutureChild;
 	}
 	
 	protected List<Channel> getReversedChannels(List<Channel> channels) {

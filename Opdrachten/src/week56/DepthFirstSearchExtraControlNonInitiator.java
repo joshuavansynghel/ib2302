@@ -11,7 +11,6 @@ import framework.Process;
 public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchExtraControlProcess {
 
 	private Process parent;
-	private Channel channelToFutureChild; 
 	
 	@Override
 	public void init() {
@@ -127,15 +126,7 @@ public class DepthFirstSearchExtraControlNonInitiator extends DepthFirstSearchEx
 	public void setParent (Process p) {
 		this.parent = p;
 	}
-	
-	public void setChannelToFutureChild (Channel c) {
-		channelToFutureChild = c;
-	}
-	
-	public Channel getChannelToFutureChild () {
-		return channelToFutureChild;
-	}
-	
+
 	private Channel getOutgoingToParent (Process p) {
 		Channel channelToParent = null; 
 		for (Channel c: getOutgoing()) {
