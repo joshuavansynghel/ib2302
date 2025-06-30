@@ -13,6 +13,8 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 
 	private List<Channel> randomOutgoingChannels;
 	private List<Channel> channelsThatNeedToSendAck;
+	private Channel channelToFutureChild; 
+	
 
 	@Override
 	public void init() {
@@ -22,7 +24,6 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		System.out.println("\nMessage: " + m + " received from channel " + c);
 		
 		// invalid message
 		if (!((m instanceof TokenMessage) || (m instanceof InfoMessage) ||
@@ -48,10 +49,6 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 			
 			// send ack message in reverse direction
 			send(new AckMessage(), getIncomingToOutgoing(c));
-		}
-		else if (m instanceof TokenMessage) {
-			// don't send token to channels who have have sent token themselves
-			removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
 		}
 	}
 	
@@ -85,6 +82,14 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 		channelsThatNeedToSendAck.remove(c);
 	}
 	
+	protected void setChannelToFutureChild (Channel c) {
+		channelToFutureChild = c;
+	}
+	
+	protected Channel getChannelToFutureChild () {
+		return channelToFutureChild;
+	}
+	
 	protected List<Channel> getReversedChannels(List<Channel> channels) {
 		List<Channel> reversedChannels = new ArrayList<>();
 		for (Channel c : channels) {
@@ -106,7 +111,7 @@ public abstract class DepthFirstSearchExtraControlProcess extends WaveProcess {
 	protected Channel getOutgoingToIncoming (Channel c) {
 		Channel reversedChannel = null;
 		for (Channel cIn: getIncoming()) {
-			if (cIn.getReceiver() == c.getSender()) {
+			if (cIn.getSender() == c.getReceiver()) {
 				reversedChannel = cIn;
 			}
 		}

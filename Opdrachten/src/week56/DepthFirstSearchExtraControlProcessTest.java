@@ -17,7 +17,8 @@ import framework.Channel;
 import framework.Network;
 
 class DepthFirstSearchExtraControlProcessTest {
-	
+
+
 	/**
 	 * initTest1:
 	 * In the initiator (with more than 2 processes),

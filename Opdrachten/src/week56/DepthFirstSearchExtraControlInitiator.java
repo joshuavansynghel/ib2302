@@ -9,28 +9,27 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 	@Override
 	public void init() {
 		super.init();
-		Channel futureChild = getRandomOutgoingChannels().get(0);
-		removeNextOutgoingChannel();
-		
-		System.out.println("INcoming: " + getIncoming());
-		System.out.println("Ack channels: " + getChannelsThatNeedToSendAck());
-		removeChannelThatNeedToSendAck(getIncomingToOutgoing(futureChild));
-		
-		
+		setChannelToFutureChild(getRandomOutgoingChannels().get(0));
+		removeChannelThatNeedToSendAck(getOutgoingToIncoming(getChannelToFutureChild()));
+
 		// send info message to all outgoing channels except future child
-		for (Channel c: getRandomOutgoingChannels()) {
+		for (Channel c: getReversedChannels(getChannelsThatNeedToSendAck())) {
 			send(new InfoMessage(), c);
 		}
 		
 		// in case no outgoing channels remain, send token message
-		if (getRandomOutgoingChannels().size() == 0) {
-			send(new TokenMessage(), futureChild);
+		if (getChannelsThatNeedToSendAck().isEmpty()) {
+			send(new TokenMessage(), getChannelToFutureChild());
 		}
 	}
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
 		super.receive(m, c);
+		
+		if (m instanceof TokenMessage) {
+			removeSpecificOutgoingChannel(getIncomingToOutgoing(c));
+		}
 
 		// if token received an all channels have sent info or token, finish
 		if ((m instanceof TokenMessage) && getRandomOutgoingChannels().isEmpty()) {
@@ -38,15 +37,15 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 		}
 		// if process still holds token and all acks are received
 		// forward token to next process
-		else if (getChannelsThatNeedToSendAck().isEmpty() &&
-				(!getRandomOutgoingChannels().isEmpty())) {
-			send (new TokenMessage(), getRandomOutgoingChannels().get(0));
+		else if (m instanceof AckMessage && getChannelsThatNeedToSendAck().isEmpty()) {
+			send (new TokenMessage(), getChannelToFutureChild());
 			removeNextOutgoingChannel();
 		}
-		// if token was received and not all outgoing processes have received token
+		// if token was received from child and not all channels have received token
 		// forward token to next process
 		else if (m instanceof TokenMessage) {
-			send (new TokenMessage(), getRandomOutgoingChannels().get(0));
+			setChannelToFutureChild(getRandomOutgoingChannels().get(0));
+			send (new TokenMessage(), getChannelToFutureChild());
 			removeNextOutgoingChannel();
 		}
 	}
