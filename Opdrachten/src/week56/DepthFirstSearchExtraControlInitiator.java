@@ -10,11 +10,8 @@ public class DepthFirstSearchExtraControlInitiator extends DepthFirstSearchExtra
 	public void init() {
 		super.init();
 		setChannelToFutureChild(getRandomOutgoingChannels().get(0));
-		//removeNextOutgoingChannel();
 		removeChannelThatNeedToSendAck(getOutgoingToIncoming(getChannelToFutureChild()));
-		
-		System.out.println("info channels: " + getReversedChannels(getChannelsThatNeedToSendAck()));
-		
+
 		// send info message to all outgoing channels except future child
 		for (Channel c: getReversedChannels(getChannelsThatNeedToSendAck())) {
 			send(new InfoMessage(), c);
