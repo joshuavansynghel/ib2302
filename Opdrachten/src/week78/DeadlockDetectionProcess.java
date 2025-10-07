@@ -26,4 +26,12 @@ public abstract class DeadlockDetectionProcess extends Process {
 	void addOutRequest(Channel c) {
 		outRequests.add(c);
 	}
+	
+	protected Set<Channel> getInRequests() {
+		return inRequests;
+	}
+	
+	protected Set<Channel> getOutRequests() {
+		return outRequests;
+	}
 }
