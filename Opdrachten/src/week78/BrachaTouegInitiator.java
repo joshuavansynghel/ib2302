@@ -24,17 +24,20 @@ public class BrachaTouegInitiator extends BrachaTouegProcess {
 		
 		// Initiator sends Done upon receiving Notify
 		if (m instanceof NotifyMessage) {
+			System.out.println("Send Done to " + getIncomingToOutgoing(c));
 			send(new DoneMessage(), getIncomingToOutgoing(c));
 		}
+	
 		
-		System.out.println("\nNumber of outRequest: " + getOutRequests().size());
+		
 		if (getOutRequests().size() == 0) {
-			print(String.valueOf(isDeadlocked()));
+			System.out.println("Number of requests when out request empty: " + requests);
+			print(String.valueOf(isNotDeadlocked()));
 		}
 	}
 	
-	private boolean isDeadlocked () {
-		return requests != 0;
+	private boolean isNotDeadlocked () {
+		return requests == 0;
 	}
 }
 

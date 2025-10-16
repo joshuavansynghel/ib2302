@@ -5,6 +5,8 @@ import framework.IllegalReceiveException;
 import framework.Message;
 
 public class BrachaTouegProcess extends DeadlockDetectionProcess {
+	
+	private Channel grantParent;
 
 	@Override
 	public void init() {
@@ -13,9 +15,12 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
 		
-		System.out.println("Message " + m + " received from " + c);
+		System.out.println("\nMessage " + m + " received from " + c);
+		System.out.println("InRequests: " + getInRequests());
+		System.out.println("OutRequests: " + getOutRequests());
 		
 		if (!validMessage(m)) {
+			System.out.println("Throw error due to invalid message");
 			throw new IllegalReceiveException();
 		}
 		else if (m instanceof DoneMessage) {
@@ -23,22 +28,38 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 		}
 		else if (m instanceof AckMessage) {
 			processAckMessage(c);
+			
+			if ((getInRequests().size() == 0) && (grantParent != null)) {
+				System.out.println("Send ack to " + getIncomingToOutgoing(getGrantParent()));
+				send(new AckMessage(), getIncomingToOutgoing(getGrantParent()));
+			}
 		}
 		else if (m instanceof GrantMessage) {
 			processGrantMessage(c);
 		}
+	}
+	
+	
+	private void setGrantParent(Channel c) {
+		this.grantParent = c;
+	}
+	
+	private Channel getGrantParent() {
+		return this.grantParent;
 	}
 
 	
 	// send messages to neighbours methods
 	protected void sendNotifyToOutRequests() {
 		for (Channel c: getOutRequests()) {
+			System.out.println("Send notify to " + c);
 			send(new NotifyMessage(), c);
 		}
 	}
 	
 	protected void sendGrantToInRequests() {
 		for (Channel c: getInRequests()) {
+			System.out.println("Send grant to " + getIncomingToOutgoing(c));
 			send(new GrantMessage(), getIncomingToOutgoing(c));
 		}
 	}
@@ -72,9 +93,8 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	}
 	
 	protected void processDoneMessage(Channel c) throws IllegalReceiveException {
-		if (getOutRequests().contains(c)) {
-			getOutRequests().remove(c);
-			setRequests(getOutRequests().size());
+		if (getOutRequests().contains(getIncomingToOutgoing(c))) {
+			getOutRequests().remove(getIncomingToOutgoing(c));
 		}
 		else {
 			throw new IllegalReceiveException();
@@ -82,8 +102,8 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	}
 	
 	protected void processAckMessage(Channel c) throws IllegalReceiveException {
-		if (getInRequests().contains(getIncomingToOutgoing(c))) {
-			getInRequests().remove(getIncomingToOutgoing(c));
+		if (getInRequests().contains(c)) {
+			getInRequests().remove(c);
 		}
 		else {
 			throw new IllegalReceiveException();
@@ -92,17 +112,22 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	
 	protected void processGrantMessage(Channel c) throws IllegalReceiveException {
 		// Decrease number of requests
-		if (getOutRequests().contains(c)) {
+		System.out.println("Outrequests after decrement: " + super.requests);
+		if (getOutRequests().contains(getIncomingToOutgoing(c))) {
 			decrementOutRequests();
 		}
+		System.out.println("Outrequests after decrement: " + super.requests);
 		
 		// If process has resources free, send grants to each incoming request
 		if(super.requests == 0) {
 			sendGrantToInRequests();
+			setGrantParent(c);
 		}
-		
-		// Send ack back
-		send(new AckMessage(), getIncomingToOutgoing(c));
+		else {
+			// Send ack back
+			System.out.println("Send ack to " + getIncomingToOutgoing(c));
+			send(new AckMessage(), getIncomingToOutgoing(c));
+		}
 	}
 	
 	protected void decrementOutRequests() {
