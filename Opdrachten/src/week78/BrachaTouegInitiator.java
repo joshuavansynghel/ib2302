@@ -5,11 +5,12 @@ import framework.IllegalReceiveException;
 import framework.Message;
 
 public class BrachaTouegInitiator extends BrachaTouegProcess {
+	
+	private boolean decisionMade = false;
 
 	@Override
 	public void init() {
 		super.init();
-		
 		sendNotifyToOutRequests();
 		
 		// If initial list is empty, send acks
@@ -27,15 +28,16 @@ public class BrachaTouegInitiator extends BrachaTouegProcess {
 			send(new DoneMessage(), getIncomingToOutgoing(c));
 		}
 		
-		System.out.println("\nNumber of outRequest: " + getOutRequests().size());
-		if (getOutRequests().size() == 0) {
-			print(String.valueOf(isDeadlocked()));
+		if (getOutRequests().size() == 0 && (!decisionMade)) {
+			print(String.valueOf(isNotDeadlocked()));
+			decisionMade = true;
 		}
 	}
 	
-	private boolean isDeadlocked () {
-		return requests != 0;
+	private boolean isNotDeadlocked () {
+		return requests == 0;
 	}
+	
 }
 
 	

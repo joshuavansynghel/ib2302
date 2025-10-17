@@ -5,6 +5,8 @@ import framework.IllegalReceiveException;
 import framework.Message;
 
 public class BrachaTouegProcess extends DeadlockDetectionProcess {
+	
+	private Channel grantParent;
 
 	@Override
 	public void init() {
@@ -12,9 +14,7 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		
-		System.out.println("Message " + m + " received from " + c);
-		
+
 		if (!validMessage(m)) {
 			throw new IllegalReceiveException();
 		}
@@ -23,10 +23,23 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 		}
 		else if (m instanceof AckMessage) {
 			processAckMessage(c);
+			
+			if ((getInRequests().size() == 0) && (grantParent != null)) {
+				send(new AckMessage(), getIncomingToOutgoing(getGrantParent()));
+			}
 		}
 		else if (m instanceof GrantMessage) {
 			processGrantMessage(c);
 		}
+	}
+	
+	
+	private void setGrantParent(Channel c) {
+		this.grantParent = c;
+	}
+	
+	private Channel getGrantParent() {
+		return this.grantParent;
 	}
 
 	
@@ -72,9 +85,8 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	}
 	
 	protected void processDoneMessage(Channel c) throws IllegalReceiveException {
-		if (getOutRequests().contains(c)) {
-			getOutRequests().remove(c);
-			setRequests(getOutRequests().size());
+		if (getOutRequests().contains(getIncomingToOutgoing(c))) {
+			getOutRequests().remove(getIncomingToOutgoing(c));
 		}
 		else {
 			throw new IllegalReceiveException();
@@ -82,8 +94,8 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	}
 	
 	protected void processAckMessage(Channel c) throws IllegalReceiveException {
-		if (getInRequests().contains(getIncomingToOutgoing(c))) {
-			getInRequests().remove(getIncomingToOutgoing(c));
+		if (getInRequests().contains(c)) {
+			getInRequests().remove(c);
 		}
 		else {
 			throw new IllegalReceiveException();
@@ -92,26 +104,28 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	
 	protected void processGrantMessage(Channel c) throws IllegalReceiveException {
 		// Decrease number of requests
-		if (getOutRequests().contains(c)) {
+		if (getOutRequests().contains(getIncomingToOutgoing(c))) {
 			decrementOutRequests();
 		}
 		
 		// If process has resources free, send grants to each incoming request
 		if(super.requests == 0) {
-			sendGrantToInRequests();
+			if (getInRequests().size() > 0) {
+				sendGrantToInRequests();
+				setGrantParent(c);
+			}
+			else {
+				send(new AckMessage(), getIncomingToOutgoing(c));
+			}
 		}
-		
-		// Send ack back
-		send(new AckMessage(), getIncomingToOutgoing(c));
+		else {
+			// Send ack back
+			send(new AckMessage(), getIncomingToOutgoing(c));
+		}
 	}
 	
 	protected void decrementOutRequests() {
-		if (super.requests == 0) {
-			setRequests(Integer.MIN_VALUE);
-		}
-		else {
-			setRequests(super.requests - 1);
-		}
+		setRequests(super.requests - 1);
 	}
 }
 

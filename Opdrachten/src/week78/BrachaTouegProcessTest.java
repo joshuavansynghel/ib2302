@@ -572,6 +572,7 @@ class BrachaTouegProcessTest {
 		// v receives done from x: should return done to w
 		receiveOrCatch(v, new DoneMessage(), n.getChannel("x", "v"));
 		assertEquals(1, n.getChannel("v", "u").getContent().size());
+		System.out.println("Content " + n.getChannel("v",  "w").getContent());
 		assertEquals(1, n.getChannel("v", "w").getContent().size());
 		assertEquals(1, n.getChannel("v", "x").getContent().size());
 		assertTrue(n.getChannel("v", "w").getContent().toArray()[0] instanceof DoneMessage);
