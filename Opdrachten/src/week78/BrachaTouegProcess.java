@@ -14,13 +14,8 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 
 	@Override
 	public void receive(Message m, Channel c) throws IllegalReceiveException {
-		
-		System.out.println("\nMessage " + m + " received from " + c);
-		System.out.println("InRequests: " + getInRequests());
-		System.out.println("OutRequests: " + getOutRequests());
-		
+
 		if (!validMessage(m)) {
-			System.out.println("Throw error due to invalid message");
 			throw new IllegalReceiveException();
 		}
 		else if (m instanceof DoneMessage) {
@@ -30,7 +25,6 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 			processAckMessage(c);
 			
 			if ((getInRequests().size() == 0) && (grantParent != null)) {
-				System.out.println("Send ack to " + getIncomingToOutgoing(getGrantParent()));
 				send(new AckMessage(), getIncomingToOutgoing(getGrantParent()));
 			}
 		}
@@ -52,14 +46,12 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	// send messages to neighbours methods
 	protected void sendNotifyToOutRequests() {
 		for (Channel c: getOutRequests()) {
-			System.out.println("Send notify to " + c);
 			send(new NotifyMessage(), c);
 		}
 	}
 	
 	protected void sendGrantToInRequests() {
 		for (Channel c: getInRequests()) {
-			System.out.println("Send grant to " + getIncomingToOutgoing(c));
 			send(new GrantMessage(), getIncomingToOutgoing(c));
 		}
 	}
@@ -112,31 +104,28 @@ public class BrachaTouegProcess extends DeadlockDetectionProcess {
 	
 	protected void processGrantMessage(Channel c) throws IllegalReceiveException {
 		// Decrease number of requests
-		System.out.println("Outrequests after decrement: " + super.requests);
 		if (getOutRequests().contains(getIncomingToOutgoing(c))) {
 			decrementOutRequests();
 		}
-		System.out.println("Outrequests after decrement: " + super.requests);
 		
 		// If process has resources free, send grants to each incoming request
 		if(super.requests == 0) {
-			sendGrantToInRequests();
-			setGrantParent(c);
+			if (getInRequests().size() > 0) {
+				sendGrantToInRequests();
+				setGrantParent(c);
+			}
+			else {
+				send(new AckMessage(), getIncomingToOutgoing(c));
+			}
 		}
 		else {
 			// Send ack back
-			System.out.println("Send ack to " + getIncomingToOutgoing(c));
 			send(new AckMessage(), getIncomingToOutgoing(c));
 		}
 	}
 	
 	protected void decrementOutRequests() {
-		if (super.requests == 0) {
-			setRequests(Integer.MIN_VALUE);
-		}
-		else {
-			setRequests(super.requests - 1);
-		}
+		setRequests(super.requests - 1);
 	}
 }
 
